@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+.env
+
+# runtime / data files
+ai_memory.db
+memory.json
+# runtime json files
+*.json
