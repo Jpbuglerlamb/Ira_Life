@@ -5,3 +5,4 @@ passlib[bcrypt]
 requests
 python-dotenv
 openai
+dataparser
