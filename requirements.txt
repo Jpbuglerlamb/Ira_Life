@@ -4,3 +4,4 @@ python-jose
 passlib[bcrypt]
 requests
 python-dotenv
+openai
