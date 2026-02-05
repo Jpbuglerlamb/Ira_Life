@@ -33,17 +33,12 @@ def create_app() -> FastAPI:
         # Reminder checker loop
         # -------------------------
         def reminder_loop():
-            from memory.long_term import ReminderService
+            from workers.reminder import execute_due_reminders, clear_expired_reminders
             while True:
                 for user_id in range(1, 11):
-                    due_reminders = ReminderService.list_reminders(user_id)
-                    for r_id, text, time_str, status, sort_time in due_reminders:
-                        logger.log_user_interaction(
-                            user_id,
-                            "System",
-                            f"Reminder due: {text} at {time_str}"
-                        )
-                    time.sleep(60)
+                    execute_due_reminders(user_id)
+                    clear_expired_reminders(user_id)
+                time.sleep(30)
 
         Thread(target=reminder_loop, daemon=True).start()
 

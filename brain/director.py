@@ -1,3 +1,4 @@
+# brain/director.py
 from brain.responder import generate_response
 
 def process_input(username, mode, message):
