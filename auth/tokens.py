@@ -23,11 +23,20 @@ pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # -------------------------
 # Password Utilities
 # -------------------------
+def _normalize_password(pw: str) -> str:
+    """
+    bcrypt has a 72-byte input limit.
+    We normalize to <=72 bytes to avoid passlib/bcrypt errors.
+    """
+    if pw is None:
+        return ""
+    return pw.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+
 def hash_password(pw: str) -> str:
-    return pwd.hash(pw)
+    return pwd.hash(_normalize_password(pw))
 
 def verify_password(pw: str, hashed: str) -> bool:
-    return pwd.verify(pw, hashed)
+    return pwd.verify(_normalize_password(pw), hashed)
 
 # -------------------------
 # Token Utilities
