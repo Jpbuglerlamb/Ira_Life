@@ -48,18 +48,26 @@ def login(req: LoginRequest, stay_logged_in: bool = False):
 
 @router.post("/signup")
 def signup(req: LoginRequest, stay_logged_in: bool = False):
+    if not req.password:
+        raise HTTPException(status_code=400, detail="Password required")
+
     existing = UserService.get_user(req.username)
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
 
     user = UserService.create_user(req.username, req.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Could not create user")
+        raise HTTPException(status_code=500, detail="Failed to create user")
 
     user_modes[user["id"]] = "Secretary"
     token = create_token(req.username, long_lived=stay_logged_in)
 
-    return {"access_token": token, "token_type": "bearer", "stay_logged_in": stay_logged_in, "is_new_user": True}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "stay_logged_in": stay_logged_in,
+        "is_new_user": True
+    }
 
 @router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest, username: str = Depends(get_user)):

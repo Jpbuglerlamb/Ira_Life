@@ -1,9 +1,9 @@
 # models/user.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class LoginRequest(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=1)
 
 class UpdateProfileRequest(BaseModel):
     username: str
