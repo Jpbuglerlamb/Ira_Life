@@ -7,7 +7,7 @@ from threading import Thread
 import time
 from dotenv import load_dotenv
 import os
-from memory.long_term import init_db,
+from memory.long_term import init_db
 
 # Load environment variables
 load_dotenv()
