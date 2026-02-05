@@ -7,13 +7,12 @@ from threading import Thread
 import time
 from dotenv import load_dotenv
 import os
-from memory.long_term import init_db, migrate_reminders_table
+from memory.long_term import init_db,
 
 # Load environment variables
 load_dotenv()
 print("OPENAI_API_KEY loaded:", os.getenv("OPENAI_API_KEY") is not None)
 init_db()
-migrate_reminders_table()
 
 
 def create_app() -> FastAPI:
