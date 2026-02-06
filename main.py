@@ -1,8 +1,8 @@
-#main.py
+# main.py
 from fastapi import FastAPI
 from api.routes import router as api_router
 from api.profile.routes import router as profile_router
-from workers import logger, reflection, reminder
+from workers import logger, reflection
 from threading import Thread
 import time
 from dotenv import load_dotenv
@@ -22,6 +22,11 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(api_router)
     app.include_router(profile_router)
+
+    # ✅ Health/root endpoint (must be defined after `app` exists)
+    @app.get("/")
+    def root():
+        return {"status": "ok"}
 
     # Startup event for background workers
     @app.on_event("startup")
@@ -56,8 +61,6 @@ def create_app() -> FastAPI:
 
     return app
 
-@app.get("/")
-def root():
-    return {"status": "ok"}
+
 # Initialize FastAPI app
 app = create_app()
