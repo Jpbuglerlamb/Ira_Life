@@ -1,55 +1,99 @@
 # auth/tokens.py
 
 import os
-from datetime import datetime, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Dict, Any
+
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-import secrets
 
-# -------------------------
+# -------------------------------------------------------------------
 # Configuration
-# -------------------------
-SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_urlsafe(64)
+# -------------------------------------------------------------------
+
+# IMPORTANT:
+# Set SECRET_KEY in your Render environment variables.
+# If you fall back to a random secret, tokens will break on every deploy/restart.
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY is not set. Add SECRET_KEY to your environment (Render dashboard) "
+        "to keep JWT tokens valid across restarts."
+    )
+
 ALGORITHM = "HS256"
 
 # Default short-term session token: 1 day
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24)))
 
 # Optional long-lived token (stay logged in): 30 days
-LONG_TOKEN_EXPIRE_DAYS = 30
+LONG_TOKEN_EXPIRE_DAYS = int(os.getenv("LONG_TOKEN_EXPIRE_DAYS", "30"))
 
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd = CryptContext(schemes=["argon2"], deprecated="auto")
 
-# -------------------------
+
+# -------------------------------------------------------------------
 # Password Utilities
-# -------------------------
-def _normalize_password(pw: str) -> str:
-    """
-    bcrypt has a 72-byte input limit.
-    We normalize to <=72 bytes to avoid passlib/bcrypt errors.
-    """
-    if pw is None:
-        return ""
-    return pw.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+# -------------------------------------------------------------------
 
-def hash_password(pw: str) -> str:
-    return pwd.hash(_normalize_password(pw))
+def hash_password(password: str) -> str:
+    """Hash a plaintext password."""
+    if password is None or password == "":
+        raise ValueError("Password required")
+    return pwd.hash(password)
 
-def verify_password(pw: str, hashed: str) -> bool:
-    return pwd.verify(_normalize_password(pw), hashed)
 
-# -------------------------
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a plaintext password against a stored hash."""
+    if not password or not hashed:
+        return False
+    try:
+        return pwd.verify(password, hashed)
+    except Exception:
+        # If the hash is malformed or the scheme changed, don't crash auth routes.
+        return False
+
+
+# -------------------------------------------------------------------
 # Token Utilities
-# -------------------------
+# -------------------------------------------------------------------
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def create_token(username: str, long_lived: bool = False) -> str:
-    expire = datetime.utcnow() + (
-        timedelta(days=LONG_TOKEN_EXPIRE_DAYS) if long_lived else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    """
+    Create a JWT access token.
+    'sub' holds the username, 'exp' is the expiry datetime (UTC).
+    """
+    if not username:
+        raise ValueError("username required")
+
+    expire = _utcnow() + (
+        timedelta(days=LONG_TOKEN_EXPIRE_DAYS)
+        if long_lived
+        else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    payload = {"sub": username, "exp": expire}
+
+    payload: Dict[str, Any] = {
+        "sub": username,
+        "exp": expire,
+        "iat": _utcnow(),
+        "type": "access",
+        "ll": bool(long_lived),
+    }
+
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-def decode_token(token: str):
+
+def decode_token(token: str) -> Optional[Dict[str, Any]]:
+    """Decode a JWT token. Returns payload dict or None if invalid/expired."""
+    if not token:
+        return None
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
+

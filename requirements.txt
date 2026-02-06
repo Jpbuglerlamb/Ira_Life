@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 python-jose
-passlib[bcrypt]
+passlib>=1.7.4
+argon2-cffi>=23.1.0
 requests
 python-dotenv
 openai
