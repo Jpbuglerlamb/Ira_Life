@@ -141,8 +141,9 @@ def generate_response(user_id, mode, user_input: str) -> str:
         response = openai.chat.completions.create(
             model="gpt-4-0613",
             messages=messages,
-            temperature=mode.temperature,
-            max_tokens=mode.max_tokens
+            temperature = getattr(mode, "temperature", 0.7),
+            max_tokens  = getattr(mode, "max_tokens", 600)
+
         )
         reply = response.choices[0].message.content
     except Exception:

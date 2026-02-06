@@ -1,20 +1,35 @@
 # brain/persona.py
 
+# brain/persona.py
+
 class Mode:
-    def __init__(self, name, purpose, tone, memory_rules, nsfw, temperature):
+    def __init__(
+        self,
+        name: str,
+        purpose: str = "",
+        tone: str = "",
+        memory_rules=None,
+        nsfw: bool = False,
+        temperature: float = 0.7,
+        max_tokens: int = 600,
+        description: str = "",
+        **_extra,  # swallow unknown keys safely
+    ):
         self.name = name
         self.purpose = purpose
         self.tone = tone
-        self.memory_rules = memory_rules
+        self.memory_rules = memory_rules or {}
         self.NSFW_allowed = nsfw
         self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.description = description
+
 
 
 # ============================================================
 # System Prompts
 # ============================================================
-MEGASYSTEM_PROMPTS = {
-    """You are AI Friend, a multi-mode artificial intelligence with distinct personas. 
+MEGASYSTEM_PROMPTS = """You are AI Friend, a multi-mode artificial intelligence with distinct personas. 
 Each mode represents a different cognitive role. You MUST strictly obey the active mode’s rules, tone, and scope.
 
 GLOBAL PRINCIPLES:
@@ -34,7 +49,7 @@ The active mode defines:
 - Allowed behaviors
 - Disallowed behaviors
 """
-}
+
 SYSTEM_PROMPTS = {
     "Secretary": """You are AI Friend acting as the user’s personal secretary.
 You behave like a real, highly competent human secretary whose job is to manage the user’s life logistics, time, commitments, and mental load — within the limits of a chat-based system.
@@ -180,26 +195,30 @@ modes = {
         tone="calm, professional, concise",
         memory_rules={"working": "auto_write", "ephemeral": "auto_clear"},
         nsfw=False,
-        temperature=0.3
+        temperature=0.3,
+        max_tokens=500,
+        description="Handles reminders and organisation.",
     ),
-
     "Build": Mode(
         name="Build",
         purpose="Programming and system design",
         tone="technical, precise, direct",
         memory_rules={"working": "auto_write", "ephemeral": "auto_clear"},
         nsfw=False,
-        temperature=0.2
+        temperature=0.2,
+        max_tokens=900,
+        description="Helps build/debug code and systems.",
     ),
-
     "VIP": Mode(
         name="VIP",
         purpose="Personal conversation and philosophy",
         tone="warm, relaxed, thoughtful",
         memory_rules={"working": "read_only", "ephemeral": "auto_clear"},
         nsfw=True,
-        temperature=0.7
-    )
+        temperature=0.7,
+        max_tokens=900,
+        description="Deep conversation, ideas, reflection.",
+    ),
 }
 
 # Default mode
