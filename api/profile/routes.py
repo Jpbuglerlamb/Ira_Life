@@ -16,8 +16,14 @@ def get_profile(username: str = Depends(get_user)):
     email = MemoryService.recall(user_id, "Profile", "email") or ""
     aiPersonality = MemoryService.recall(user_id, "Profile", "aiPersonality") or ""
     preferences = MemoryService.recall(user_id, "Profile", "preferences") or ""
-    notificationsEnabled = MemoryService.recall(user_id, "Profile", "notificationsEnabled")
-    notificationsEnabled = True if notificationsEnabled in (None, "", "True", True) else False
+    raw = MemoryService.recall(user_id, "Profile", "notificationsEnabled")
+    if raw is None or raw == "":
+        notificationsEnabled = True
+    elif isinstance(raw, bool):
+        notificationsEnabled = raw
+    else:
+        notificationsEnabled = str(raw).strip().lower() in ("true", "1", "yes", "y", "on")
+
 
     return ProfileResponse(
         fullName=fullName,

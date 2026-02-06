@@ -37,14 +37,13 @@ def get_user_mode(user_id: int) -> Mode:
 
 @router.post("/login")
 def login(req: LoginRequest, stay_logged_in: bool = False):
+    if not req.password:
+        raise HTTPException(status_code=400, detail="Password required")
+
     user = UserService.get_user(req.username)
     if not user or not UserService.verify_user(req.username, req.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    user_modes.setdefault(user["id"], "Secretary")
-    token = create_token(req.username, long_lived=stay_logged_in)
-
-    return {"access_token": token, "token_type": "bearer", "stay_logged_in": stay_logged_in}
 
 @router.post("/signup")
 def signup(req: LoginRequest, stay_logged_in: bool = False):

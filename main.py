@@ -56,6 +56,8 @@ def create_app() -> FastAPI:
 
     return app
 
-
+@app.get("/")
+def root():
+    return {"status": "ok"}
 # Initialize FastAPI app
 app = create_app()
